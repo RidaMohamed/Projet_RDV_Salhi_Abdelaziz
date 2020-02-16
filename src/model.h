@@ -5,6 +5,8 @@
 #include "geometry.h"
 
 // using code from ssloy git
+// credit to https://github.com/ssloy/tinyrenderer/blob/master/model.cpp
+
 class Model {
 
 private:

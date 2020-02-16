@@ -3,10 +3,14 @@
 #include <sstream>
 #include "model.h"
 
+// credit to https://github.com/ssloy/tinyrenderer/blob/master/model.cpp
+
 Model::Model(const char *filename) : verts(), faces(), norms(), uv_(){
     std::ifstream in;
     in.open (filename, std::ifstream::in);
+    // case fail to open the file
     if (in.fail()) {
+        std::cerr << "Failed to open the file : " << filename << std::endl;
         return;
     }
     std::string line;
