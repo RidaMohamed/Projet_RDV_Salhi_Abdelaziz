@@ -23,8 +23,8 @@ void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     ofs.close();
 }
 
-// after following drwaing lines bresenham algorithm, now we drw traingles 
-// noting that this is not the best code in term of execution time 
+// after following drwaing lines bresenham algorithm, now we draw traingles with 
+// best algorithme in term of time execution
 void line(int x0, int y0, int x1, int y1, std::vector<Vec3f> &framebuffer, Vec3f color, int width, int height) {
     bool steep = false;
     /* 
@@ -42,15 +42,36 @@ void line(int x0, int y0, int x1, int y1, std::vector<Vec3f> &framebuffer, Vec3f
         std::swap(y0, y1); 
     } 
     //
+    int dx = x1-x0; 
+    int dy = y1-y0; 
+    int derror2 = std::abs(dy)*2; 
+    int error2 = 0; 
+    int y = y0; 
     for (int x=x0; x<=x1; x++) { 
-        float t = (x-x0)/(float)(x1-x0); 
-        int y = y0*(1.-t) + y1*t; 
         if (steep) { 
-           framebuffer[y+x*width] = color; 
+            framebuffer[y+x*width] = color;
         } else { 
-           framebuffer[x+y*width] = color;
+            framebuffer[x+y*width] = color;
+        } 
+        error2 += derror2; 
+        if (error2 > dx) { 
+            y += (y1>y0?1:-1); 
+            error2 -= dx*2; 
         } 
     } 
+
+}
+
+// methode to draw trialbles lines  calling the lines methode  for each to point of triangles
+void triangles(std::vector<Vec3f> &framebuffer, Vec3f color,int d1[], int d2[], int nbL, int width, int height){
+    for(int i = 0; i < nbL - 1 ; i++){
+    	// calling line function
+        line(d1[i], d2[i], d1[i+1], d2[i+1],framebuffer, color, width, height);
+    }
+    if(nbL > 1){
+    	// calling line function
+        line(d1[0], d2[0], d1[nbL-1], d2[nbL-1], framebuffer, color, width, height);
+    }
 }
 
 void render(){
@@ -64,18 +85,13 @@ void render(){
 
     int nbL = 3 ;
 
-    // drawing things
+    // drawing tringles points
     int d1[3] = {50, 50,975};
     int d2[3] = {718, 50, 718};
+
+    // calling triables function
+    triangles(framebuffer, bleuCool, d1, d2, nbL, width, height);
     
-    for(int i = 0; i < nbL - 1 ; i++){
-    	// calling line function
-        line(d1[i], d2[i], d1[i+1], d2[i+1],framebuffer, bleuCool, width, height);
-    }
-    if(nbL > 1){
-    	// calling line function
-        line(d1[0], d2[0], d1[nbL-1], d2[nbL-1], framebuffer, bleuCool, width, height);
-    }
     // creating ppm image function
     fbToFile(framebuffer, height, width);
 }
