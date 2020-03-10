@@ -10,8 +10,8 @@
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_second.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
-    ofs << "P6\n" << w << " " << h << "\n255\n";
+    ofs.open("../out/out_third.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
         float max = std::max(c[0], std::max(c[1], c[2]));
@@ -82,15 +82,29 @@ void render(){
     const int height = 768;
     
     std::vector<Vec3f> framebuffer(width*height);
+    Vec3f camera = Vec3f(0, 0, 0);
+    Vec3f orient = Vec3f(0, 0, 0);
 
+    //our model
+    Model modelDiablo = Model("../obj/diablo3_pose.obj");
     int nbL = 3 ;
 
     // drawing tringles points
-    int d1[3] = {50, 50,975};
-    int d2[3] = {718, 50, 718};
+    int d1[nbL] /*= {50, 50,975}*/;
+    int d2[nbL]/* = {718, 50, 718}*/;
 
     // calling triables function
-    triangles(framebuffer, bleuCool, d1, d2, nbL, width, height);
+    //triangles(framebuffer, bleuCool, d1, d2, nbL, width, height);
+
+    Vec3f point;
+    for(int i = 0; i < modelDiablo.nfaces(); i++){
+        for(int j = 0; j < nbL; j++){
+            point = modelDiablo.vert(i, j);
+            d1[j] = width - (int)((point.x+1) * width)/2;
+            d2[j] = height - (int)((point.y+1) * height)/2;
+        }
+        triangles(framebuffer, bleuCool, d1, d2, nbL, width, height);
+    }
     
     // creating ppm image function
     fbToFile(framebuffer, height, width);
