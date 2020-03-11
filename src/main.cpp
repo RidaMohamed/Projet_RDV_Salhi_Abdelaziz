@@ -11,7 +11,7 @@ void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
     ofs.open("../out/out_third.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
-    
+    ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
         float max = std::max(c[0], std::max(c[1], c[2]));
