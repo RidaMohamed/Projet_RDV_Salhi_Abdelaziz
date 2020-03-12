@@ -1,16 +1,17 @@
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include "model.h"
 #include "geometry.h"
 
 // credit to https://github.com/ssloy/tinyraytracer 
 // author : SALHI Mohamed Elridha && ABDELAZIZ Yamina
-
+// fixing error
 //-----------------------------------------------------------
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_num_6.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_sixth_fixed.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -238,7 +239,7 @@ void render(){
     std::vector<float> zBuffer(width*height);
     Vec3f camera = Vec3f(0, 0, 0);
     Vec3f orient = Vec3f(0, 0, 0);
-
+    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
     //our model "Diablo"
     Model modelDiablo = Model("../obj/diablo3_pose.obj");
     int nbL = 3 ;
