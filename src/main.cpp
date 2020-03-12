@@ -5,13 +5,13 @@
 
 // credit to https://github.com/ssloy/tinyraytracer 
 // author : SALHI Mohamed Elridha && ABDELAZIZ Yamina
-// using sweeping algorithm to draw triangle
+// now we changed from sweeping algorithm to barycentric coordinates algorithm
 
 //-----------------------------------------------------------
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_fourth.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_fifth.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -157,6 +157,48 @@ void toSweepTriangle(Vec3f points[], std::vector<float> &zBuffer, std::vector<Ve
 
 }
 
+/*
+ * using barycentric coordinates algorithm we draw a triangle 
+ */
+void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, std::vector<Vec3f> &framebuffer, Vec3f color, int width, int height){
+    Vec3f P, PA;
+    Vec3f A = points[0];
+    Vec3f B = points[1];
+    Vec3f C = points[2];
+
+    Vec3f AB = Vec3f(B.x - A.x,B.y - A.y,B.z - A.z);
+    Vec3f AC = Vec3f(C.x - A.x,C.y - A.y,C.z - A.z);
+
+    // finding bounding box
+    int minX, maxX, minY, maxY;
+    minX = std::min(A.x, std::min(B.x, C.x));
+    maxX = std::max(A.x, std::max(B.x, C.x));
+    minY = std::min(A.y, std::min(B.y, C.y));
+    maxY = std::max(A.y, std::max(B.y, C.y));
+
+    // iterating on bounding box
+    for(int x = minX; x <= maxX; x++){
+        for(int y = minY; y <= maxY; y++){
+            Vec3f P = Vec3f(x, y, 1);
+            Vec3f PA = Vec3f(
+                    A.x - P.x,
+                    A.y - P.y,
+                    A.z - P.z
+            );
+
+            Vec3f vecX = Vec3f(AB.x, AC.x, PA.x);
+            Vec3f vecY = Vec3f(AB.y, AC.y, PA.y);
+            Vec3f coor = cross(vecX, vecY);
+
+            // checking if it is inside the triangle
+            if( (1.f - (coor.x + coor.y)/coor.z) >= 0 && (coor.x / coor.z) >= 0
+            && (coor.y / coor.z) >= 0 && std::abs(coor.z)>=1){
+                framebuffer[y*width + x] = color;
+            }
+        }
+    }
+}
+
 void render(){
 	const Vec3f bleuCol = Vec3f (0.1 ,1 , 1);
 	const Vec3f redCol = Vec3f(1, 0, 0);
@@ -187,8 +229,9 @@ void render(){
             point.y  = height - ((point.y+1) * height)/2;
             points[j] = point;
         }
-        //calling the methode to Sweep Triangle
-        toSweepTriangle(points, zBuffer, framebuffer, bleuCol, width, height);
+        //calling the methode Rasterize
+        algoRasterize(points, zBuffer, framebuffer, bleuCol, width, height);
+
     }
     
     // creating ppm image function
@@ -198,5 +241,6 @@ void render(){
 int main() {
 	std::cout << "hello boys !!" << std::endl;
     render();
+    //std::cout << "err" << std::endl;
     std::cout << "finished!!" << std::endl;
 }
