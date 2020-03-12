@@ -5,13 +5,12 @@
 
 // credit to https://github.com/ssloy/tinyraytracer 
 // author : SALHI Mohamed Elridha && ABDELAZIZ Yamina
-// now we changed from sweeping algorithm to barycentric coordinates algorithm
 
 //-----------------------------------------------------------
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_fifth.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_num_6.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -76,6 +75,15 @@ void drawPolygon(std::vector<Vec3f> &framebuffer, Vec3f color, Vec3f points[], i
     	// calling line function to draw each line
         line(points[0].x, points[0].y, points[nbL-1].x, points[nbL-1].y, framebuffer, color, width, height);
     }
+}
+
+//
+Vec3f getBarycentricCoordinates(Vec3f AB, Vec3f AC, Vec3f PA){
+    Vec3f vecX, vecY, coor;
+    vecX = Vec3f(AB.x, AC.x, PA.x);
+    vecY = Vec3f(AB.y, AC.y, PA.y);
+    coor = cross(vecX, vecY);
+    return Vec3f((coor.x / coor.z), (coor.y / coor.z), (1.f - (coor.x + coor.y)/coor.z));
 }
 
 // Using sweeping algorithm tp draw a triangle 
@@ -157,6 +165,24 @@ void toSweepTriangle(Vec3f points[], std::vector<float> &zBuffer, std::vector<Ve
 
 }
 
+
+
+ // cette methode fait la mise a jour de z_buffer 
+ // si c'est le cas elle retourne true 
+bool MAJZBuffer(int x, int y, Vec3f points[], Vec3f barycenter, std::vector<float> &zBuffer, int width, int height){
+    bool res = false;
+    float z;
+    if(x >= 0 && y >= 0 && x < width && y < height ){
+        z = points[0].z * barycenter.x + points[1].z * barycenter.y + points[2].z * barycenter.z;
+        // verfier is z dans z-buffer est inf
+        if(z > zBuffer[y*width + x]){
+            zBuffer[y*width + x] = z;
+            res = true;
+        }
+    }
+    return res;
+}
+
 /*
  * using barycentric coordinates algorithm we draw a triangle 
  */
@@ -186,13 +212,12 @@ void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, std::vector<Vec3
                     A.z - P.z
             );
 
-            Vec3f vecX = Vec3f(AB.x, AC.x, PA.x);
-            Vec3f vecY = Vec3f(AB.y, AC.y, PA.y);
-            Vec3f coor = cross(vecX, vecY);
+            Vec3f barycenter = getBarycentricCoordinates(AB, AC, PA);
 
-            // checking if it is inside the triangle
-            if( (1.f - (coor.x + coor.y)/coor.z) >= 0 && (coor.x / coor.z) >= 0
-            && (coor.y / coor.z) >= 0 && std::abs(coor.z)>=1){
+            // checking if it is inside the triangle and faire la MAJ
+            if(barycenter.x >= 0 && barycenter.y >= 0 && barycenter.z >= 0 &&
+           	   MAJZBuffer(x, y, points, barycenter, zBuffer, width, height))
+            {
                 framebuffer[y*width + x] = color;
             }
         }
@@ -225,7 +250,7 @@ void render(){
     for(int i = 0; i < modelDiablo.nfaces(); i++){ // each diablo face
         for(int j = 0; j < nbL; j++){
             point = modelDiablo.vert(i, j);
-            point.x  = width  - ((point.x+1) * width)/2;
+            point.x  = ((point.x+1) * width)/2;
             point.y  = height - ((point.y+1) * height)/2;
             points[j] = point;
         }
