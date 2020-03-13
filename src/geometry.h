@@ -2,84 +2,91 @@
 #define __GEOMETRY_H__
 
 #include <cmath>
-#include <vector>
-#include <cassert>
-#include <iostream>
 
 // Using ssloy code from git
 
-template <size_t DIM, typename T> struct vec {
-    vec() { for (size_t i=DIM; i--; data_[i] = T()); }
-          T& operator[](const size_t i)       { assert(i<DIM); return data_[i]; }
-    const T& operator[](const size_t i) const { assert(i<DIM); return data_[i]; }
-private:
-    T data_[DIM];
+template <class t> struct Vec2 {
+    t x, y;
+    Vec2<t>() : x(t()), y(t()) {}
+    Vec2<t>(t _x, t _y) : x(_x), y(_y) {}
+    Vec2<t>(const Vec2<t> &v) : x(t()), y(t()) { *this = v; }
+    Vec2<t> & operator =(const Vec2<t> &v) {
+        if (this != &v) {
+            x = v.x;
+            y = v.y;
+        }
+        return *this;
+    }
+    Vec2<t> operator +(const Vec2<t> &V) const { return Vec2<t>(x+V.x, y+V.y); }
+    Vec2<t> operator -(const Vec2<t> &V) const { return Vec2<t>(x-V.x, y-V.y); }
+    Vec2<t> operator *(float f)          const { return Vec2<t>(x*f, y*f); }
+    t& operator[](const int i) { if (x<=0) return x; else return y; }
+    template <class > friend std::ostream& operator<<(std::ostream& s, Vec2<t>& v);
 };
 
-typedef vec<2, float> Vec2f;
-typedef vec<3, float> Vec3f;
-typedef vec<3, int  > Vec3i;
-typedef vec<4, float> Vec4f;
-
-template <typename T> struct vec<2,T> {
-    vec() : x(T()), y(T()) {}
-    vec(T X, T Y) : x(X), y(Y) {}
-    template <class U> vec<2,T>(const vec<2,U> &v);
-          T& operator[](const size_t i)       { assert(i<2); return i<=0 ? x : y; }
-    const T& operator[](const size_t i) const { assert(i<2); return i<=0 ? x : y; }
-    T x,y;
+template <class t> struct Vec3 {
+    t x, y, z;
+    Vec3<t>() : x(t()), y(t()), z(t()) { }
+    Vec3<t>(t _x, t _y, t _z) : x(_x), y(_y), z(_z) {}
+    template <class u> Vec3<t>(const Vec3<u> &v);
+    Vec3<t>(const Vec3<t> &v) : x(t()), y(t()), z(t()) { *this = v; }
+    Vec3<t> & operator =(const Vec3<t> &v) {
+        if (this != &v) {
+            x = v.x;
+            y = v.y;
+            z = v.z;
+        }
+        return *this;
+    }
+    Vec3<t> operator ^(const Vec3<t> &v) const { return Vec3<t>(y*v.z-z*v.y, z*v.x-x*v.z, x*v.y-y*v.x); }
+    Vec3<t> operator +(const Vec3<t> &v) const { return Vec3<t>(x+v.x, y+v.y, z+v.z); }
+    Vec3<t> operator -(const Vec3<t> &v) const { return Vec3<t>(x-v.x, y-v.y, z-v.z); }
+    Vec3<t> operator *(float f)          const { return Vec3<t>(x*f, y*f, z*f); }
+    t       operator *(const Vec3<t> &v) const { return x*v.x + y*v.y + z*v.z; }
+    float norm () const { return std::sqrt(x*x+y*y+z*z); }
+    Vec3<t> & normalize(t l=1) { *this = (*this)*(l/norm()); return *this; }
+    t& operator[](const int i) { if (i<=0) return x; else if (i==1) return y; else return z; }
+    template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<t>& v);
 };
 
-template <typename T> struct vec<3,T> {
-    vec() : x(T()), y(T()), z(T()) {}
-    vec(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
-          T& operator[](const size_t i)       { assert(i<3); return i<=0 ? x : (1==i ? y : z); }
-    const T& operator[](const size_t i) const { assert(i<3); return i<=0 ? x : (1==i ? y : z); }
-    float norm() { return std::sqrt(x*x+y*y+z*z); }
-    vec<3,T> & normalize(T l=1) { *this = (*this)*(l/norm()); return *this; }
-    T x,y,z;
+typedef Vec2<float> Vec2f;
+typedef Vec2<int>   Vec2i;
+typedef Vec3<float> Vec3f;
+typedef Vec3<int>   Vec3i;
+
+template <> template <> Vec3<int>::Vec3(const Vec3<float> &v);
+template <> template <> Vec3<float>::Vec3(const Vec3<int> &v);
+
+template <class t> std::ostream& operator<<(std::ostream& s, Vec2<t>& v) {
+    s << "(" << v.x << ", " << v.y << ")\n";
+    return s;
+}
+
+template <class t> std::ostream& operator<<(std::ostream& s, Vec3<t>& v) {
+    s << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
+    return s;
+}
+
+
+//definir la classe MATRICE
+const int DEFAULT_ALLOC=4;
+
+class Matrix {
+    std::vector<std::vector<float> > m;
+    int rows, cols;
+    
+public:
+    Matrix(int r=DEFAULT_ALLOC, int c=DEFAULT_ALLOC);
+    inline int nrows();
+    inline int ncols();
+
+    static Matrix identity(int dimensions);
+    std::vector<float>& operator[](const int i);
+    Matrix operator*(const Matrix& a);
+    Matrix transpose();
+    Matrix inverse();
+
+    friend std::ostream& operator<<(std::ostream& s, Matrix& m);
 };
 
-template <typename T> struct vec<4,T> {
-    vec() : x(T()), y(T()), z(T()), w(T()) {}
-    vec(T X, T Y, T Z, T W) : x(X), y(Y), z(Z), w(W) {}
-          T& operator[](const size_t i)       { assert(i<4); return i<=0 ? x : (1==i ? y : (2==i ? z : w)); }
-    const T& operator[](const size_t i) const { assert(i<4); return i<=0 ? x : (1==i ? y : (2==i ? z : w)); }
-    T x,y,z,w;
-};
-
-template<size_t DIM,typename T> T operator*(const vec<DIM,T>& lhs, const vec<DIM,T>& rhs) {
-    T ret = T();
-    for (size_t i=DIM; i--; ret+=lhs[i]*rhs[i]);
-    return ret;
-}
-
-template<size_t DIM,typename T>vec<DIM,T> operator+(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
-    for (size_t i=DIM; i--; lhs[i]+=rhs[i]);
-    return lhs;
-}
-
-template<size_t DIM,typename T>vec<DIM,T> operator-(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
-    for (size_t i=DIM; i--; lhs[i]-=rhs[i]);
-    return lhs;
-}
-
-template<size_t DIM,typename T,typename U> vec<DIM,T> operator*(const vec<DIM,T> &lhs, const U& rhs) {
-    vec<DIM,T> ret;
-    for (size_t i=DIM; i--; ret[i]=lhs[i]*rhs);
-    return ret;
-}
-
-template<size_t DIM,typename T> vec<DIM,T> operator-(const vec<DIM,T> &lhs) {
-    return lhs*T(-1);
-}
-
-template <typename T> vec<3,T> cross(vec<3,T> v1, vec<3,T> v2) {
-    return vec<3,T>(v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x);
-}
-
-template <size_t DIM, typename T> std::ostream& operator<<(std::ostream& out, const vec<DIM,T>& v) {
-    for(unsigned int i=0; i<DIM; i++) out << v[i] << " " ;
-    return out ;
-}
 #endif //__GEOMETRY_H__
