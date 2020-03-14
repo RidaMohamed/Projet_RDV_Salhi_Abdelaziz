@@ -11,7 +11,7 @@
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_ten.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_eleven.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -80,11 +80,10 @@ void drawPolygon(std::vector<Vec3f> &framebuffer, const Vec3f &color, Vec3f poin
 
 //
 Vec3f getBarycentricCoordinates(const Vec3f AB, const Vec3f AC, const Vec3f PA){
-    Vec3f coor;
     Vec3f vecX = Vec3f(AB.x, AC.x, PA.x);
     Vec3f vecY = Vec3f(AB.y, AC.y, PA.y);
     //changes
-     coor = vecX^vecY;
+    Vec3f coor = vecX^vecY;
     return Vec3f((1.f - (coor.x + coor.y)/coor.z), (coor.x / coor.z), (coor.y / coor.z));
 }
 
@@ -216,7 +215,7 @@ void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, const Vec3f norm
             Vec3f barycenter = getBarycentricCoordinates(AB, AC, PA);
 
             // checking if it is inside the triangle and faire la MAJ
-            if(barycenter.x >= 0 && barycenter.y >= 0 && barycenter.z >= 0 ) 
+            if(barycenter.x > 0 && barycenter.y > 0 && barycenter.z > 0 ) 
             {
                  MAJZBuffer(x, y, points, norms, text, barycenter, zBuffer, framebuffer, width, height, color, lamp);
             }
@@ -265,7 +264,7 @@ void render(){
 
 	//image height and width et depth
 	const int width = 1280;
-    const int height = 720;
+    const int height = 920;
     const int depth = 255;
     
     std::vector<Vec3f> framebuffer(width*height);
@@ -274,7 +273,7 @@ void render(){
 
     Vec3f camera = Vec3f(0, 0, 2);
     Vec3f orient = Vec3f(0, 0, 5);
-    Vec3f ambient_light_direction_vector = Vec3f( 0, 0, -1);// using this as a lamp
+    Vec3f lamp = Vec3f( 0, 0, 1);// using this as a lamp
 
     Matrix VP = viewport(width/8, height/8, width*3/4, height*3/4, depth); // recuperer la matrice viewport creer par la fontion (git de prof)
     Matrix P  = projection(camera.z);// recuperer la matrice perspective
@@ -294,7 +293,6 @@ void render(){
         for(int j = 0; j < nbL; j++){
             point = modelDiablo.vert(i, j);
             points[j] = m2v(VP * P * v2m(point));
-            //points[j].y = height - points[j].y;//reverse the monstre
         }
 
         Vec3f norms[nbL];
@@ -304,7 +302,7 @@ void render(){
             norms[k] = modelDiablo.normal(i, k);
         }
         // calling the methode algoRasterize
-        algoRasterize(points, zBuffer, norms, text, ambient_light_direction_vector, framebuffer, Vec3f(1, 1, 1), width, height);        
+        algoRasterize(points, zBuffer, norms, text, lamp, framebuffer, Vec3f(1, 1, 1), width, height);        
     }
     
     // creating ppm image function
