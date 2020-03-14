@@ -28,6 +28,9 @@ cd build
 cmake ..
 make
 ```
+## Final image 3D
+![3d image ](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/5e39b7f35aa13f31309f5af1b725e766fbae66b8/out/out_3d_image.png){:height="700px" width="400px"}
+
 
 ## License
 Free to use
