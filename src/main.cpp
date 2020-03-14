@@ -38,7 +38,7 @@ void line(int x0, int y0, int x1, int y1, std::vector<Vec3f> &framebuffer, const
     } 
 
     if (x0>x1) { 
-    // make it leftâˆ’toâˆ’right 
+    // make it left to right 
         std::swap(x0, x1); 
         std::swap(y0, y1); 
     } 
@@ -113,7 +113,7 @@ void toSweepTriangle(Vec3f points[], std::vector<float> &zBuffer, std::vector<Ve
     
     if(AB.y > 0){//upper part of the triangle
         for (float i = 0; i < AB.y; i++) {
-            // linear interpolation to retrieve x position of pAC
+            // linear interpolation to retrieve x position of dAC
             if(A.x < C.x){
 				dAC.x = A.x + (AC.x * i) / AC.y ;
             }else{
@@ -297,21 +297,6 @@ void render(){
             points[j] = m2v(VP * P * v2m(point));
             points[j].y = height - points[j].y;
         }
-        //calling the methode Rasterize with different colors
-        /*
-        if(k == 0){
-        	colorForMaticeUse = Vec3f(1, 0, 0);
-        	k++;
-        }
-        else if ( k == 1){
-        	colorForMaticeUse = Vec3f(0, 1, 0);
-        	k++;
-        }
-        else{
-        	colorForMaticeUse = Vec3f(0, 0, 1);
-        	k = 0;
-        }
-        algoRasterize(points, zBuffer, framebuffer, colorForMaticeUse, width, height);*/
         Vec3f e1 = points[1] - points[0];
         Vec3f e2 = points[2] - points[0];
 
@@ -320,7 +305,7 @@ void render(){
 
         // compute illumination for the triangle
         float  illumination = N*ambient_light_direction_vector;
-        // checking if > 0 (if it is, then the normal was toward us)
+        // checking if > 0 
         if(illumination > 0){
             algoRasterize(points, zBuffer, framebuffer, Vec3f(illumination, illumination, illumination), width, height);
         }
