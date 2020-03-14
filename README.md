@@ -4,7 +4,7 @@
 
 #### Premiere etape 
 Nous avons commencé le projet par faire le render d'une simple image comme debut [first out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/master/out/out_first.ppm),
-par la suite nous avons fait le lines drawing et traingles pour tester suivant l'algo " bresenham algorithm " limage out est [second out image] (https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/master/out/out_second.ppm)
+par la suite nous avons fait le lines drawing et traingles pour tester suivant l'algo " bresenham algorithm " limage out est [second out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/master/out/out_second.ppm)
 
 #### Deuxieme etape 
 Pour faire le premier affichage du monstre nous avon utiliser la mehode orthographic projection pour l'affichage de mesh du modele [fourth out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/3e73de56ed6e0afd8c7ab9b6875d5e4161a45836/out/out_fourth.ppm),
@@ -19,7 +19,7 @@ En derniere etape nous avons utiliser light pour l'affichge de monstre [ninth ou
 [eleven out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/3b384581f74173cb37b65b5a0f77b7632693a8c7/out/out_eleven.ppm), et pour finir nous avons fait la 3d avec la creation de 2 images ensuite faire le decalge de ces 2 derniers 
 pour avoir en fin une vision 3d [3d_image out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/ae90469ef03755922871c357337f324930612726/out/out_3d_image.ppm).
 
-## compilation (derniere version)
+## compilation (de derniere version)
 ``` sh 
 git clone https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz.git
 cd Projet_RDV_Salhi_Abdelaziz
