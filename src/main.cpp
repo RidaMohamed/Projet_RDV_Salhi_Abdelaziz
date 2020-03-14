@@ -11,7 +11,7 @@
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_ninth.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_ten.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -79,14 +79,13 @@ void drawPolygon(std::vector<Vec3f> &framebuffer, const Vec3f &color, Vec3f poin
 }
 
 //
-Vec3f getBarycentricCoordinates(Vec3f AB, Vec3f AC, Vec3f PA){
+Vec3f getBarycentricCoordinates(const Vec3f AB, const Vec3f AC, const Vec3f PA){
     Vec3f coor;
     Vec3f vecX = Vec3f(AB.x, AC.x, PA.x);
     Vec3f vecY = Vec3f(AB.y, AC.y, PA.y);
-    coor.x = vecX.y*vecY.z - vecX.z*vecY.y;
-    coor.y = vecX.z*vecY.x - vecX.x*vecY.z;
-    coor.z = vecX.x*vecY.y - vecX.y*vecY.x;
-    return Vec3f((coor.x / coor.z), (coor.y / coor.z), (1.f - (coor.x + coor.y)/coor.z));
+    //changes
+     coor = vecX^vecY;
+    return Vec3f((1.f - (coor.x + coor.y)/coor.z), (coor.x / coor.z), (coor.y / coor.z));
 }
 
 // Using sweeping algorithm tp draw a triangle 
@@ -172,24 +171,23 @@ void toSweepTriangle(Vec3f points[], std::vector<float> &zBuffer, std::vector<Ve
 
  // cette methode fait la mise a jour de z_buffer 
  // si c'est le cas elle retourne true 
-bool MAJZBuffer(int x, int y, Vec3f points[], const Vec3f &barycenter, std::vector<float> &zBuffer, std::vector<Vec3f> &framebuffer, const Vec3f &color, int width, int height ){
-    bool res = false;
-    float z;
-    if(x >= 0 && y >= 0 && x < width && y < height ){
-        z = points[0].z * barycenter.x + points[1].z * barycenter.y + points[2].z * barycenter.z;
-        // verfier is z dans z-buffer est inf
-        if(z >= zBuffer[y*width + x]){
-            zBuffer[y*width + x] = z;
-            framebuffer[y*width + x] = color;
-            //res = true;
-        }
+bool MAJZBuffer(int x, int y, Vec3f points[], const Vec3f norms[], Vec3f text[], const Vec3f &barycenter, std::vector<float> &zBuffer, std::vector<Vec3f> &framebuffer, int width, 
+	int height, const Vec3f &color, const Vec3f &lamp){
+    // bi-linear interpolation to get out Z
+    float z = points[0].z * barycenter.x + points[1].z * barycenter.y + points[2].z * barycenter.z;
+    Vec3f interNorm = (norms[0] * barycenter.x + norms[1] * barycenter.y + norms[2] * barycenter.z).normalize();
+    float illuminate = interNorm*lamp;
+    // verfier si z est inferieur
+    if(z >= zBuffer[y*width + x] && illuminate > 0){
+        zBuffer[y*width + x] = z;
+        framebuffer[(height - 1 - y)*width + x] = Vec3f(illuminate, illuminate, illuminate);
     }
-    return res;
 }
 
 
 // using barycentric coordinates algorithm we draw a triangle 
-void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, std::vector<Vec3f> &framebuffer, const Vec3f &color, int width, int height){
+void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, const Vec3f norms[], Vec3f text[], const Vec3f &lamp, std::vector<Vec3f> &framebuffer, const Vec3f &color, int width,
+ int height){
     Vec3f P, PA;
     Vec3f A = points[0];
     Vec3f B = points[1];
@@ -220,7 +218,7 @@ void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, std::vector<Vec3
             // checking if it is inside the triangle and faire la MAJ
             if(barycenter.x >= 0 && barycenter.y >= 0 && barycenter.z >= 0 ) 
             {
-                 MAJZBuffer(x, y, points, barycenter, zBuffer, framebuffer, color, width, height);
+                 MAJZBuffer(x, y, points, norms, text, barycenter, zBuffer, framebuffer, width, height, color, lamp);
             }
         }
     }
@@ -250,7 +248,7 @@ Vec3f m2v(Matrix m) {
 }
 
 
-Matrix v2m(const Vec3f v) {
+Matrix v2m(const Vec3f &v) {
     Matrix m(4, 1);
     m[0][0] = v.x;
     m[1][0] = v.y;
@@ -272,44 +270,41 @@ void render(){
     
     std::vector<Vec3f> framebuffer(width*height);
     std::vector<float> zBuffer(width*height);
+    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
+
     Vec3f camera = Vec3f(0, 0, 2);
     Vec3f orient = Vec3f(0, 0, 5);
-
-    Vec3f ambient_light_direction_vector = Vec3f( 0, 0, -1);// ajouts de la lumiere 
+    Vec3f ambient_light_direction_vector = Vec3f( 0, 0, -1);// using this as a lamp
 
     Matrix VP = viewport(width/8, height/8, width*3/4, height*3/4, depth); // recuperer la matrice viewport creer par la fontion (git de prof)
     Matrix P  = projection(camera.z);// recuperer la matrice perspective
 
-    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
     //our model "Diablo"
     Model modelDiablo = Model("../obj/diablo3_pose.obj");
-    int nbL = 3 ;
-
-    Vec3f points[nbL];
+    
+    
     //calling polygon function for each diablo face
     //drawPolygon(framebuffer, zBuffer, d1, d2, nbL, width, height);
+    int nbL = 3 ;
+    Vec3f points[nbL];
     Vec3f point;
     Vec3f colorForMaticeUse;
-    int k = 0 ; 
+
     for(int i = 0; i < modelDiablo.nfaces(); i++){ // each diablo face
         for(int j = 0; j < nbL; j++){
             point = modelDiablo.vert(i, j);
             points[j] = m2v(VP * P * v2m(point));
-            points[j].y = height - points[j].y;
-        }
-        Vec3f e1 = points[1] - points[0];
-        Vec3f e2 = points[2] - points[0];
-
-        // compute triangle normal
-        Vec3f N = (e1^e2).normalize();
-
-        // compute illumination for the triangle
-        float  illumination = N*ambient_light_direction_vector;
-        // checking if > 0 
-        if(illumination > 0){
-            algoRasterize(points, zBuffer, framebuffer, Vec3f(illumination, illumination, illumination), width, height);
+            //points[j].y = height - points[j].y;//reverse the monstre
         }
 
+        Vec3f norms[nbL];
+        Vec3f text[nbL];
+        // getting the normal for each vertices
+        for(int k = 0 ; k < nbL; k++){
+            norms[k] = modelDiablo.normal(i, k);
+        }
+        // calling the methode algoRasterize
+        algoRasterize(points, zBuffer, norms, text, ambient_light_direction_vector, framebuffer, Vec3f(1, 1, 1), width, height);        
     }
     
     // creating ppm image function
