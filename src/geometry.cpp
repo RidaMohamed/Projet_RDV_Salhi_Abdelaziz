@@ -57,7 +57,6 @@ Matrix Matrix::transpose() {
 
 Matrix Matrix::inverse() {
     assert(rows==cols);
-    // augmenting the square matrix with the identity matrix of the same dimensions a => [ai]
     Matrix result(rows, cols*2);
     for(int i=0; i<rows; i++)
         for(int j=0; j<cols; j++)
@@ -76,10 +75,10 @@ Matrix Matrix::inverse() {
             }
         }
     }
-    // normalize the last row
+    // nomralisation de derniere ligne 
     for(int j=result.cols-1; j>=rows-1; j--)
         result[rows-1][j] /= result[rows-1][rows-1];
-    // second pass
+    // faire un 2eme passage
     for (int i=rows-1; i>0; i--) {
         for (int k=i-1; k>=0; k--) {
             float coeff = result[k][i];
@@ -88,7 +87,7 @@ Matrix Matrix::inverse() {
             }
         }
     }
-    // cut the identity matrix back
+    // couper la matrice I (IDENTITE)
     Matrix truncate(rows, cols);
     for(int i=0; i<rows; i++)
         for(int j=0; j<cols; j++)

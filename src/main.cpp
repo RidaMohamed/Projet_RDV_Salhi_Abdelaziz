@@ -5,13 +5,13 @@
 #include "geometry.h"
 
 // credit to https://github.com/ssloy/tinyraytracer 
-// author : SALHI Mohamed Elridha && ABDELAZIZ Yamina
+// authors : SALHI Mohamed Elridha && ABDELAZIZ Yamina
 // 
 //-----------------------------------------------------------
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_seventh.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_ninth.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -187,9 +187,8 @@ bool MAJZBuffer(int x, int y, Vec3f points[], const Vec3f &barycenter, std::vect
     return res;
 }
 
-/*
- * using barycentric coordinates algorithm we draw a triangle 
- */
+
+// using barycentric coordinates algorithm we draw a triangle 
 void algoRasterize(Vec3f points[], std::vector<float> &zBuffer, std::vector<Vec3f> &framebuffer, const Vec3f &color, int width, int height){
     Vec3f P, PA;
     Vec3f A = points[0];
@@ -276,7 +275,7 @@ void render(){
     Vec3f camera = Vec3f(0, 0, 2);
     Vec3f orient = Vec3f(0, 0, 5);
 
-    Vec3f ambient_light_direction = Vec3f( 1, 1, 1);// ajouts de la lumiere 
+    Vec3f ambient_light_direction_vector = Vec3f( 0, 0, -1);// ajouts de la lumiere 
 
     Matrix VP = viewport(width/8, height/8, width*3/4, height*3/4, depth); // recuperer la matrice viewport creer par la fontion (git de prof)
     Matrix P  = projection(camera.z);// recuperer la matrice perspective
@@ -299,7 +298,7 @@ void render(){
             points[j].y = height - points[j].y;
         }
         //calling the methode Rasterize with different colors
-        
+        /*
         if(k == 0){
         	colorForMaticeUse = Vec3f(1, 0, 0);
         	k++;
@@ -312,7 +311,19 @@ void render(){
         	colorForMaticeUse = Vec3f(0, 0, 1);
         	k = 0;
         }
-        algoRasterize(points, zBuffer, framebuffer, colorForMaticeUse, width, height);
+        algoRasterize(points, zBuffer, framebuffer, colorForMaticeUse, width, height);*/
+        Vec3f e1 = points[1] - points[0];
+        Vec3f e2 = points[2] - points[0];
+
+        // compute triangle normal
+        Vec3f N = (e1^e2).normalize();
+
+        // compute illumination for the triangle
+        float  illumination = N*ambient_light_direction_vector;
+        // checking if > 0 (if it is, then the normal was toward us)
+        if(illumination > 0){
+            algoRasterize(points, zBuffer, framebuffer, Vec3f(illumination, illumination, illumination), width, height);
+        }
 
     }
     
@@ -323,6 +334,5 @@ void render(){
 int main() {
 	std::cout << "hello boys !!" << std::endl;
     render();
-    //std::cout << "erreur" << std::endl;
     std::cout << "fini!!" << std::endl;
 }
