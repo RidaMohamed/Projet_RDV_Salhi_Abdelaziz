@@ -3,7 +3,7 @@
 ## Description 
 
 #### Premiere etape 
-Nous avons commencé le projet par faire le render d'une simple image comme debut [first out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/master/out/out_first.ppm),
+Nous avons commencé le projet par faire le render d'une simple image comme debut [first out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/master/out/out_first.png),
 par la suite nous avons fait le lines drawing et traingles pour tester suivant l'algo " bresenham algorithm " limage out est [second out image](https://github.com/RidaMohamed/Projet_RDV_Salhi_Abdelaziz/blob/master/out/out_second.ppm)
 
 #### Deuxieme etape 
