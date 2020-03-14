@@ -6,7 +6,7 @@
 
 // credit to https://github.com/ssloy/tinyraytracer 
 // authors : SALHI Mohamed Elridha && ABDELAZIZ Yamina
-//
+// 
 //-----------------------------------------------------------
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
@@ -385,4 +385,4 @@ int main() {
 	std::cout << "hello boys !!" << std::endl;
     render();
     std::cout << "fini!!" << std::endl;
-}}
+}
