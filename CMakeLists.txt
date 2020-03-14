@@ -11,4 +11,4 @@ file(GLOB SOURCES
         )
 
 add_executable(Projet_RDV_Salhi_Abdelaziz
-        src/main.cpp)
+        src/main.cpp src/main.h src/main.cpp src/main.h )
