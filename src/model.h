@@ -20,8 +20,9 @@ public:
     ~Model();
     int nverts();
     int nfaces();
+    int dot(int ifa, int nthv);  
     Vec2f uv(int ifa, int nthv);
-    Vec3f vert(int i);
+    Vec3f &vert(int i);
     Vec3f vert(int iface, int nthvert);
     Vec3f normal(int ifa, int nthv);
 };

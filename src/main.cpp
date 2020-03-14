@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <limits>
 #include "model.cpp"
@@ -6,12 +6,12 @@
 
 // credit to https://github.com/ssloy/tinyraytracer 
 // authors : SALHI Mohamed Elridha && ABDELAZIZ Yamina
-// 
+//
 //-----------------------------------------------------------
 void fbToFile(std::vector<Vec3f> &framebuffer, int h, int w){
     //creating the out.ppm image
     std::ofstream ofs;
-    ofs.open("../out/out_eleven.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
+    ofs.open("../out/out_3d_image.ppm", std::ios::binary);// rendred images are called "out.ppm" and can be found in out folder
     ofs << "P6\n" << w << " " << h << "\n255\n";
     for(size_t i = 0; i < h*w; i++){
         Vec3f &c = framebuffer[i];
@@ -177,7 +177,7 @@ bool MAJZBuffer(int x, int y, Vec3f points[], const Vec3f norms[], Vec3f text[],
     Vec3f interNorm = (norms[0] * barycenter.x + norms[1] * barycenter.y + norms[2] * barycenter.z).normalize();
     float illuminate = interNorm*lamp;
     // verfier si z est inferieur
-    if(z >= zBuffer[y*width + x] && illuminate > 0){
+    if(z >= zBuffer[y*width + x] ){
         zBuffer[y*width + x] = z;
         framebuffer[(height - 1 - y)*width + x] = Vec3f(illuminate, illuminate, illuminate);
     }
@@ -236,6 +236,7 @@ Matrix viewport(float x, float y, float w, float h, float depth) {
     return Viewport;
 }
 
+//projection
 Matrix projection(const float c){
     Matrix Projection = Matrix::identity(4);
     Projection[3][2] = -1.f/c;
@@ -256,6 +257,20 @@ Matrix v2m(const Vec3f &v) {
     return m;
 }
 
+Matrix lookat(Vec3f eye, Vec3f center, Vec3f up) {
+    Vec3f z = (eye-center).normalize();
+    Vec3f x = (up^z).normalize();
+    Vec3f y = (z^x).normalize();
+    Matrix ret = Matrix::identity(4);
+    for (int i=0; i<3; i++) {
+        ret[0][i] = x[i];
+        ret[1][i] = y[i];
+        ret[2][i] = z[i];
+        ret[i][3] = -center[i];
+    }
+    return ret;
+}
+
 void render(){
 	const Vec3f bleuCol = Vec3f (0.1 ,1 , 1);
 	const Vec3f redCol = Vec3f(1, 0, 0);
@@ -263,36 +278,68 @@ void render(){
     const Vec3f normalBleuCol = Vec3f(0, 0, 1);
 
 	//image height and width et depth
-	const int width = 1280;
-    const int height = 920;
+	const int width = 2560;
+    const int height = 1840;
     const int depth = 255;
     
-    std::vector<Vec3f> framebuffer(width*height);
-    std::vector<float> zBuffer(width*height);
-    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
+    std::vector<Vec3f> framebuffer(width*height); //utilisation pour la fusion
+    std::vector<Vec3f> framebufferLeftEye(width*height); //utilisation pour eye gauche
+    std::vector<Vec3f> framebufferRightEye(width*height);//utilisation pour right eye 
+    std::vector<float> zBuffer(width*height);//utilisation pour la fusion
 
+    //
+    //std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
+    std::vector<float> zBufferLeft(width*height);//utilisation pour eye gauche
+    std::fill(zBufferLeft.begin(), zBufferLeft.end(), std::numeric_limits<float>::lowest());
+    std::vector<float> zBufferRight(width*height);//utilisation pour right eye 
+    std::fill(zBufferRight.begin(), zBufferRight.end(), std::numeric_limits<float>::lowest());
+  	//
     Vec3f camera = Vec3f(0, 0, 2);
     Vec3f orient = Vec3f(0, 0, 5);
     Vec3f lamp = Vec3f( 0, 0, 1);// using this as a lamp
+    Vec3f center(0,0,0);
+    Vec3f leftEye(-0.1, 0, 2.5);//pour 
+    Vec3f rightEye(0.1, 0, 2.5);//pour 
 
+    //
+    Matrix ModelViewLeft = lookat(leftEye, center, Vec3f(0,1,0));
+    Matrix ModelViewRight = lookat(rightEye, center, Vec3f(0,1,0));
     Matrix VP = viewport(width/8, height/8, width*3/4, height*3/4, depth); // recuperer la matrice viewport creer par la fontion (git de prof)
-    Matrix P  = projection(camera.z);// recuperer la matrice perspective
+
+    //
+    Matrix Projectionfusion = projection(camera.z);// recuperer la matrice perspective
+    Matrix ProjectionLeft   = projection((leftEye - center).norm());
+    Matrix ProjectionRight  = projection((rightEye - center).norm());
+
+    //
+    Matrix TotalTransformLeft = VP * ProjectionLeft * ModelViewLeft;
+    Matrix TotalTransformRight = VP * ProjectionRight * ModelViewRight;
 
     //our model "Diablo"
     Model modelDiablo = Model("../obj/diablo3_pose.obj");
     
     
-    //calling polygon function for each diablo face
+    //creaton des 2 images left right ensuite faire la creation de limage finale
     //drawPolygon(framebuffer, zBuffer, d1, d2, nbL, width, height);
     int nbL = 3 ;
     Vec3f points[nbL];
+    Vec3f pointsLeft[nbL];
+    Vec3f pointsRight[nbL];
+    //
     Vec3f point;
+    Vec3f pointLeft;
+    Vec3f pointRight;
     Vec3f colorForMaticeUse;
 
     for(int i = 0; i < modelDiablo.nfaces(); i++){ // each diablo face
         for(int j = 0; j < nbL; j++){
-            point = modelDiablo.vert(i, j);
-            points[j] = m2v(VP * P * v2m(point));
+            //point = modelDiablo.vert(i, j);
+            //points[j] = m2v(VP * P * v2m(point));
+            pointLeft = modelDiablo.vert(modelDiablo.dot(i, j));
+            pointRight = modelDiablo.vert(modelDiablo.dot(i, j));
+
+            pointsLeft[j] = m2v(TotalTransformLeft * v2m(pointLeft));
+            pointsRight[j] = m2v(TotalTransformRight * v2m(pointRight));
         }
 
         Vec3f norms[nbL];
@@ -302,9 +349,34 @@ void render(){
             norms[k] = modelDiablo.normal(i, k);
         }
         // calling the methode algoRasterize
-        algoRasterize(points, zBuffer, norms, text, lamp, framebuffer, Vec3f(1, 1, 1), width, height);        
+        //algoRasterize(points, zBuffer, norms, text, lamp, framebuffer, Vec3f(1, 1, 1), width, height);
+        algoRasterize(pointsLeft, zBufferLeft, norms, text, lamp, framebufferLeftEye , Vec3f(1, 1, 1), width, height);
+        algoRasterize(pointsRight, zBufferRight, norms, text, lamp, framebufferRightEye , Vec3f(1, 1, 1), width, height);        
     }
     
+    for (size_t i = 0; i < height * width; ++i) {
+        Vec3f &c = framebufferLeftEye[i];
+        Vec3f &cbis = framebufferRightEye[i];
+        Vec3f res;
+        float max = std::max(c[0], std::max(c[1], c[2]));
+        //
+        if (max > 1) {
+            c = c * (1. / max);
+        }
+        //
+        float maxbis = std::max(cbis[0], std::max(cbis[1], cbis[2]));
+
+        if (maxbis > 1) {
+        	cbis = cbis * (1. / maxbis);
+        }
+
+        res = Vec3f((c.x + c.z) / 2., (c.y + cbis.y)/2., (cbis.x + cbis.z) / 2.);
+        //
+        framebuffer[i] = res ;
+    }
+
+    // image 3D FINAL
+    //fbToFile(framebufferRightEye, width, height);
     // creating ppm image function
     fbToFile(framebuffer, height, width);
 }
@@ -313,4 +385,4 @@ int main() {
 	std::cout << "hello boys !!" << std::endl;
     render();
     std::cout << "fini!!" << std::endl;
-}
+}}

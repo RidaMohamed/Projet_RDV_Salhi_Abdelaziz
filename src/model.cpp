@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 #include "model.h"
 
 // credit to https://github.com/ssloy/tinyrenderer/blob/master/model.cpp
@@ -57,9 +58,15 @@ int Model::nfaces() {
     return (int)faces.size();
 }
 
-Vec3f Model::vert(int i) {
+Vec3f &Model::vert(int i) {
+    assert(i>=0 && i<nverts());
     return verts[i];
 }
+
+int Model::dot(int ifa, int nthv) {
+    assert(ifa>=0 && ifa<nfaces() && nthv>=0 && nthv<3);
+    return faces[ifa][nthv].x;
+} 
 
 Vec3f Model::vert(int ifa, int nthv) {
     return verts[faces[ifa][nthv][0]];
